@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="de" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoschMosch — モッシュモッシュ | Frankfurt</title>
+    
+    <!-- 1. Tailwind CSS & Editorial Typography -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,600&family=Noto+Serif+JP:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- 2. React, ReactDOM, Babel & Framer Motion -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+    <!-- 3. Token Architecture + Silent Asian Palette -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'app-bg': '#050505',
+                        'panel-bg': '#0a0a0a',
+                        'card-bg': '#141414',
+                        'mosch-red': '#E3001B',
+                        'bone': '#F2EFE9',
+                        'secondary': '#a1a1aa',
+                        'muted': '#52525b',
+                    },
+                    fontFamily: { 
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        serif: ['Cormorant Garamond', 'serif'],
+                        jp: ['Noto Serif JP', 'serif']
+                    },
+                    boxShadow: {
+                        'crimson-glow': '0 0 25px rgba(227, 0, 27, 0.28)',
+                        '3xl': '0 35px 60px -15px rgba(0, 0, 0, 0.85)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+            background-color: #050505;
+            color: #F2EFE9;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .writing-vertical {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+        }
+    </style>
+</head>
+<body class="bg-app-bg font-sans antialiased selection:bg-mosch-red selection:text-white">
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        // --- BESPOKE 1.5PX STROKE SVG ICONS ---
+        const Icons = {
+            ramen: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12h16a1 1 0 0 1 1 1v.5a8.5 8.5 0 0 1-17 0V13a1 1 0 0 1 1-1Z"/>
+                    <path d="M5 4l14 2"/><path d="M5 8l14-1"/><path d="M9 21h6"/>
+                </svg>
+            ),
+            bowl: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 11h18v1a9 9 0 0 1-18 0v-1Z"/>
+                    <path d="M8 7c0-1.5 1.5-2 1.5-3.5"/><path d="M12 7c0-1.5 1.5-2 1.5-3.5"/><path d="M16 7c0-1.5 1.5-2 1.5-3.5"/>
+                </svg>
+            ),
+            wok: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 13a9 9 0 0 0 18 0H3Z"/><path d="M21 13l2-2"/><path d="M7 9c1-2 3-2 4 0s3 2 4 0"/>
+                </svg>
+            ),
+            leaf: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                </svg>
+            ),
+            drink: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 3h10l-1.5 18h-7L7 3Z"/><path d="M6 8h12"/><path d="M14 3l2-2"/>
+                </svg>
+            ),
+            calendar: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+            ),
+            pin: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+            ),
+            close: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            ),
+            star: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            )
+        };
+
+        const COPY = {
+            de: {
+                subhead: "モッシュモッシュ — Eine Portion Lächeln.",
+                heroDesc: "Die Kunst der perfekten Nudel. Handgezogene Ramen, Wok-gebratene Udon und japanische Izakaya-Kultur am Goetheplatz 2, Frankfurt.",
+                scrollText: "SCROLL TO EXPLORE",
+                swipeHint: "← Wische die Karten zur Seite oder tippe zum Auswählen →",
+                bookBtn: "Tisch Reservieren",
+                orderBtn: "Bestellen",
+                proteinLabel: "INDIVIDUELLE VERFEINERUNG",
+                proteinTitle: "Protein-Upgrade nach Wahl",
+                proteinSub: "Alle Ramen, Wok-Gerichte und Bowls lassen sich mit unseren frisch gegrillten Proteinen kombinieren.",
+                customizePrompt: "Protein-Upgrade wählen (Optional)",
+                confirmAdd: "Zur Auswahl hinzufügen",
+                spaceLabel: "DAS AMBIENTE • FRANKFURT INNENSTADT",
+                spaceTitle: "Stille Ästhetik, warme Laternen & massives Eichenholz.",
+                spaceBody: "Zwischen japanischer Kalligrafie, warm leuchtenden Papierlaternen und langen Tafeln entsteht ein Ort der Ruhe inmitten der Frankfurter Großstadt.",
+                reviewTitle: "Teile deinen MoschMosch Moment",
+                reviewSub: "Deine Stimme bedeutet uns viel. Bewerte uns auf Google oder hinterlasse direkt hier dein Feedback.",
+                googleBtn: "Auf Google bewerten (4.0 ★)",
+                feedbackPlaceholder: "Dein Feedback oder Verbesserungswunsch...",
+                feedbackSend: "Feedback abschicken",
+                feedbackThank: "Vielen Dank für dein Feedback!",
+                inspirationLine: "Get inspired — follow us on Instagram & TikTok @moschmosch",
+                categories: [
+                    { id: 'specials', label: 'SPECIALS', icon: null },
+                    { id: 'ramen', label: 'RAMEN', icon: 'ramen' },
+                    { id: 'wok', label: 'GEBRATENES', icon: 'wok' },
+                    { id: 'bowls', label: 'BOWLS & VEGAN', icon: 'leaf' },
+                    { id: 'drinks', label: 'DRINKS & SAKE', icon: 'drink' }
+                ]
+            },
+            en: {
+                subhead: "モッシュモッシュ — A Portion of Smiles.",
+                heroDesc: "Experience the art of the perfect noodle. Hand-pulled ramen, blazing wok udon, and Japanese izakaya craft at Goetheplatz 2, Frankfurt.",
+                scrollText: "SCROLL TO EXPLORE",
+                swipeHint: "← Swipe cards sideways or tap to select →",
+                bookBtn: "Book a Table",
+                orderBtn: "Order",
+                proteinLabel: "BESPOKE CUSTOMIZATION",
+                proteinTitle: "Elevate Your Bowl with Extra Protein",
+                proteinSub: "Every ramen, wok dish, and rice bowl can be paired with our seared proteins and organic plant-based upgrades.",
+                customizePrompt: "Select Protein Upgrade (Optional)",
+                confirmAdd: "Add to Selection",
+                spaceLabel: "THE SANCTUARY • DOWNTOWN FRANKFURT",
+                spaceTitle: "Quiet craft, warm paper lanterns & solid oak.",
+                spaceBody: "Framed by vintage Japanese art, glowing crimson lanterns, and long communal timber tables, MoschMosch is an urban sanctuary in the heart of Frankfurt.",
+                reviewTitle: "Share Your MoschMosch Moment",
+                reviewSub: "Your experience matters to us. Leave us a review on Google or send your feedback directly.",
+                googleBtn: "Review on Google (4.0 ★)",
+                feedbackPlaceholder: "Your feedback or thoughts...",
+                feedbackSend: "Submit Feedback",
+                feedbackThank: "Thank you for your feedback!",
+                inspirationLine: "Get inspired — follow us on Instagram & TikTok @moschmosch",
+                categories: [
+                    { id: 'specials', label: 'SPECIALS', icon: null },
+                    { id: 'ramen', label: 'RAMEN', icon: 'ramen' },
+                    { id: 'wok', label: 'WOK NOODLES', icon: 'wok' },
+                    { id: 'bowls', label: 'BOWLS & VEGAN', icon: 'leaf' },
+                    { id: 'drinks', label: 'DRINKS & SAKE', icon: 'drink' }
+                ]
+            }
+        };
+
+        const EXTRA_PROTEINS = [
+            { id: 'tempeh', nameDe: 'Bio-Tempeh (Vegan)', nameEn: 'Organic Tempeh (Vegan)', price: 4.50 },
+            { id: 'tofu', nameDe: 'Crispy & Tender Tofu (Vegan)', nameEn: 'Crispy & Tender Tofu (Vegan)', price: 4.50 },
+            { id: 'pork', nameDe: 'Crispy Pork Belly Bites', nameEn: 'Crispy Pork Belly Bites', price: 4.50 },
+            { id: 'chicken', nameDe: 'Gegrillte Hühnerbrust', nameEn: 'Grilled Chicken Breast', price: 5.50 },
+            { id: 'katsu', nameDe: 'Katsu Chicken (Panko-Hähnchen)', nameEn: 'Katsu Chicken Cutlet', price: 6.00 },
+            { id: 'beyond', nameDe: 'Beyond Meat Niku Nashi mit Sesam', nameEn: 'Beyond Meat Niku Nashi w/ Sesame', price: 7.50 },
+            { id: 'salmon', nameDe: 'Gebratener Lachs', nameEn: 'Seared Salmon Fillet', price: 7.50 },
+            { id: 'duck', nameDe: 'Zarte Entenbrust', nameEn: 'Tender Duck Breast', price: 7.75 }
+        ];
+
+        const MENU_DATA = [
+            {
+                id: 'tempeh-bowl',
+                code: 'NR. 41',
+                category: 'specials',
+                titleDe: 'VEGAN ORGANIC TEMPEH BOWL',
+                titleEn: 'VEGAN ORGANIC TEMPEH BOWL',
+                descDe: 'Knuspriger Bio-Tempeh, frischer Brokkoli, Babyspinat, Champignons und Udon-Nudeln mit hausgemachter Yakisoba-Glasur.',
+                descEn: 'Crispy organic tempeh, fresh broccoli, baby spinach, mushrooms, and hand-pulled udon with a signature yakisoba glaze.',
+                price: 16.45,
+                badgeDe: 'Plant-Powered',
+                badgeEn: 'Plant-Powered',
+                image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'tantanmen',
+                code: 'NR. 36',
+                category: 'specials',
+                titleDe: 'TANTANMEN CREAMY RAMEN',
+                titleEn: 'TANTANMEN CREAMY RAMEN',
+                descDe: 'Cremig-würzige Erdnuss-Miso-Brühe mit veganem Hack aus Beyond Meat, Tare-Würzsauce, Babyspinat und Crispy-Chili-Öl.',
+                descEn: 'Rich spiced peanut-miso broth, vegan Beyond Meat mince, sesame tare, baby spinach, and house crispy chili oil.',
+                price: 16.75,
+                badgeDe: 'Creamy Vegan',
+                badgeEn: 'Creamy Vegan',
+                image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'glucksgefuhle',
+                code: 'NR. 32',
+                category: 'specials',
+                titleDe: 'GLÜCKSGEFÜHLE MISO RAMEN',
+                titleEn: 'GLÜCKSGEFÜHLE MISO RAMEN',
+                descDe: 'Ramen mit Miso, hausgemachter Hot Sauce, rührgebratenem Hackfleisch, Schweinebauch, halbem Lava-Ei und Kimchi.',
+                descEn: 'Miso broth with house hot sauce, stir-fried minced pork, tender pork belly, half lava egg, and fermented kimchi.',
+                price: 15.00,
+                badgeDe: 'Signature',
+                badgeEn: 'Signature',
+                image: 'https://images.unsplash.com/photo-1557872943-16a5ac26437e?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'morgensonne',
+                code: 'NR. 31',
+                category: 'ramen',
+                titleDe: 'MORGENSONNE RAMEN',
+                titleEn: 'MORGENSONNE RAMEN',
+                descDe: 'Feine Miso-Hühnerbrühe, Tare-Würzsauce mit Sesam, zarte Hühnerbrust, Karotten, Sojasprossen und Babyspinat.',
+                descEn: 'Delicate miso-chicken broth, sesame tare seasoning, tender chicken breast, carrots, bean sprouts, and baby spinach.',
+                price: 15.00,
+                badgeDe: 'Klassiker',
+                badgeEn: 'Classic',
+                image: 'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'fruhlingserwachen',
+                code: 'NR. 33',
+                category: 'ramen',
+                titleDe: 'FRÜHLINGSERWACHEN RAMEN',
+                titleEn: 'FRÜHLINGSERWACHEN RAMEN',
+                descDe: 'Vegane Brühe, Tare-Würzsauce mit Sesam, Crispy & Tender Tofu, Zuckerschoten, Enoki-Pilze und Wakame.',
+                descEn: 'Clear vegan broth, sesame tare, Crispy & Tender Tofu, snap peas, enoki mushrooms, and wakame seaweed.',
+                price: 14.25,
+                badgeDe: 'Plant-Powered',
+                badgeEn: 'Plant-Powered',
+                image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'seelenruhe',
+                code: 'NR. 34',
+                category: 'ramen',
+                titleDe: 'SEELENRUHE RINDER-RAMEN',
+                titleEn: 'SEELENRUHE BEEF RAMEN',
+                descDe: 'Kräftige Rinderbrühe, Tare-Würzsauce mit Sesam, mariniertes Rindfleisch, Babyspinat und Zuckerschoten.',
+                descEn: 'Deep aromatic beef broth, sesame tare, marinated beef strips, baby spinach, and sugar snap peas.',
+                price: 17.50,
+                badgeDe: 'Rinderbrühe',
+                badgeEn: 'Beef Broth',
+                image: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'jippi-jappa',
+                code: 'NR. 40',
+                category: 'wok',
+                titleDe: 'JIPPI JAPPA YAKISOBA',
+                titleEn: 'JIPPI JAPPA YAKISOBA',
+                descDe: 'Gebratene Weizennudeln aus dem Wok mit Yakisoba-Sauce, buntem Gemüse-Mix, Champignons und Sojasprossen.',
+                descEn: 'Wok-seared wheat noodles glazed in yakisoba sauce with crisp vegetables, mushrooms, and bean sprouts.',
+                price: 11.95,
+                badgeDe: 'Wok Klassiker',
+                badgeEn: 'Wok Classic',
+                image: 'https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'yakiudon',
+                code: 'NR. 42',
+                category: 'wok',
+                titleDe: 'YAKIUDON',
+                titleEn: 'YAKIUDON',
+                descDe: 'Dicke japanische Udonnudeln gebraten mit Brokkoli, buntem Gemüse, Champignons und Yakitori-Glase.',
+                descEn: 'Thick Japanese udon noodles wok-tossed with broccoli, seasonal greens, mushrooms, and yakitori glaze.',
+                price: 13.50,
+                badgeDe: 'Plant-Powered',
+                badgeEn: 'Plant-Powered',
+                image: 'https://images.unsplash.com/photo-1618841557871-b4664fbf0cb3?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'gyoza',
+                code: 'NR. 4',
+                category: 'wok',
+                titleDe: 'CRISPY SKIN GYÔZA',
+                titleEn: 'CRISPY SKIN GYÔZA',
+                descDe: 'Japanische Teigtaschen mit hauchdünner, knuspriger Kruste und saftiger Gemüsefüllung.',
+                descEn: 'Artisanal Japanese dumplings seared with a delicate crispy lattice skirt and savory vegetable filling.',
+                price: 7.50,
+                badgeDe: 'Vorspeise',
+                badgeEn: 'Starter',
+                image: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'lachs-bowl',
+                code: 'NR. 90',
+                category: 'bowls',
+                titleDe: 'MOSCH-BOWL LACHS',
+                titleEn: 'MOSCH-BOWL SALMON',
+                descDe: 'Frischer Lachs auf warmem Sushi-Reis mit Avocado, Mango, Edamame, Rote Bete und Sesam-Dressing.',
+                descEn: 'Fresh cold-cured salmon over sushi rice with ripe avocado, mango, edamame, beetroot, and house dressing.',
+                price: 17.00,
+                badgeDe: 'Sushi-Reis',
+                badgeEn: 'Sushi Rice',
+                image: 'https://images.unsplash.com/photo-1546069901-d5bfd2cbfb1f?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'reddo-kare',
+                code: 'NR. 62',
+                category: 'bowls',
+                titleDe: 'REDDO KARÊ DON',
+                titleEn: 'REDDO KARÊ DON',
+                descDe: 'Aromatisches rotes Kokos-Curry auf duftendem Reis mit buntem Gemüse-Mix und Edamame.',
+                descEn: 'Aromatic red coconut curry served over steamed rice with crisp wok vegetables and edamame beans.',
+                price: 12.25,
+                badgeDe: 'Plant-Powered',
+                badgeEn: 'Plant-Powered',
+                image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'izakaya-salat',
+                code: 'NR. 16',
+                category: 'bowls',
+                titleDe: 'IZAKAYA SALAT',
+                titleEn: 'IZAKAYA SALAT',
+                descDe: 'Gesmashte Gurke, Blattsalat-Mix, Edamame und Daikon-Kresse mit Chili-Yuzu-Ponzu-Dressing.',
+                descEn: 'Smashed cucumber, mixed greens, edamame, and daikon cress tossed in chili-yuzu ponzu dressing.',
+                price: 11.90,
+                badgeDe: 'Frisch & Vegan',
+                badgeEn: 'Fresh & Vegan',
+                image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'zinos-spritz',
+                code: 'APERITIVO',
+                category: 'drinks',
+                titleDe: "ZINO'S APERITIVO & ROSATI SPRITZ",
+                titleEn: "ZINO'S APERITIVO & ROSATI SPRITZ",
+                descDe: 'Der Klassische (fruchtig & herb) oder Der Tropische (süß & fruchtig). Perfekt zum Anstoßen im Laternenlicht.',
+                descEn: 'The Classic (fruity & tart) or The Tropical (sweet & fruity). The ideal aperitif under the lantern lights.',
+                price: 4.90,
+                badgeDe: 'Aperitivo',
+                badgeEn: 'Aperitivo',
+                image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'kinryo-sake',
+                code: 'SAKE',
+                category: 'drinks',
+                titleDe: 'KINRYO SETO JUNMAI GINJO',
+                titleEn: 'KINRYO SETO JUNMAI GINJO SAKE',
+                descDe: 'Japanischer Premium-Reiswein in der Design-Dose. Leicht, feinherb (14,5% Vol.).',
+                descEn: 'Japanese premium Junmai Ginjo sake in an art vessel. Light and slightly dry (14.5% ABV).',
+                price: 9.90,
+                badgeDe: 'Import Japan',
+                badgeEn: 'Japan Import',
+                image: 'https://images.unsplash.com/photo-1571613316887-6f8d5cbf7ef7?auto=format&fit=crop&w=1000&q=85'
+            },
+            {
+                id: 'lava-matcha',
+                code: 'NR. 50',
+                category: 'drinks',
+                titleDe: 'SCHOKOLADENKUCHEN & MATCHA',
+                titleEn: 'MOLTEN CHOCOLATE & MATCHA',
+                descDe: 'Warmer Schokoladenkuchen mit flüssigem Kern, serviert mit japanischem Matcha-Grüntee-Eis.',
+                descEn: 'Warm molten chocolate cake paired with authentic Japanese Uji matcha green tea ice cream.',
+                price: 7.25,
+                badgeDe: 'Dessert',
+                badgeEn: 'Dessert',
+                image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=1000&q=85'
+            }
+        ];
+
+        const formatEuro = (val) => '€' + val.toFixed(2).replace('.', ',');
+
+        // --- UPGRADED SWIPEABLE FAN DECK COMPONENT WITH REAL DRAG/SWIPE PHYSICS ---
+        const FanDeck = ({ items, lang, onSelectDish }) => {
+            const [activeIndex, setActiveIndex] = useState(0);
+
+            const handleDragEnd = (e, info) => {
+                const threshold = 50;
+                if (info.offset.x > threshold) {
+                    setActiveIndex((prev) => (prev - 1 + items.length) % items.length);
+                } else if (info.offset.x < -threshold) {
+                    setActiveIndex((prev) => (prev + 1) % items.length);
+                }
+            };
+
+            if (items.length === 0) return null;
+
+            return (
+                <div className="relative w-full max-w-md mx-auto py-2 px-2">
+                    <div className="text-center mb-5">
+                        <span className="inline-block text-[10px] tracking-[0.2em] uppercase text-mosch-red bg-mosch-red/10 border border-mosch-red/30 px-4 py-1.5 rounded-full font-semibold">
+                            {COPY[lang].swipeHint}
+                        </span>
+                    </div>
+
+                    <div className="relative h-[480px] sm:h-[510px] w-full flex items-center justify-center overflow-hidden">
+                        {items.map((dish, idx) => {
+                            const offset = (idx - activeIndex + items.length) % items.length;
+                            const displayOffset = offset > items.length / 2 ? offset - items.length : offset;
+                            
+                            const isActive = displayOffset === 0;
+                            const isVisible = Math.abs(displayOffset) <= 2;
+
+                            if (!isVisible) return null;
+
+                            return (
+                                <motion.div
+                                    key={dish.id}
+                                    drag={isActive ? "x" : false}
+                                    dragConstraints={{ left: 0, right: 0 }}
+                                    dragElastic={0.9}
+                                    onDragEnd={handleDragEnd}
+                                    onClick={() => {
+                                        if (isActive) {
+                                            onSelectDish(dish);
+                                        } else {
+                                            setActiveIndex(idx);
+                                        }
+                                    }}
+                                    animate={{
+                                        x: displayOffset * 48,
+                                        y: Math.abs(displayOffset) * 12,
+                                        rotate: displayOffset * 5,
+                                        scale: isActive ? 1 : 0.88 - Math.abs(displayOffset) * 0.04,
+                                        zIndex: 50 - Math.abs(displayOffset),
+                                        opacity: Math.abs(displayOffset) > 2 ? 0 : 1 - Math.abs(displayOffset) * 0.22
+                                    }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                    className={`absolute top-0 w-[310px] sm:w-[345px] h-[460px] sm:h-[490px] rounded-3xl p-5 bg-card-bg border ${
+                                        isActive 
+                                        ? 'border-mosch-red shadow-crimson-glow cursor-grab active:cursor-grabbing' 
+                                        : 'border-white/15 cursor-pointer opacity-70 hover:opacity-90'
+                                    } flex flex-col justify-between select-none backdrop-blur-2xl`}
+                                >
+                                    <div>
+                                        <div className="relative h-60 sm:h-64 w-full rounded-2xl overflow-hidden mb-4 bg-panel-bg border border-white/10">
+                                            <img 
+                                                src={dish.image} 
+                                                alt={lang === 'de' ? dish.titleDe : dish.titleEn} 
+                                                className="w-full h-full object-cover pointer-events-none"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                            <span className="absolute top-3 left-3 bg-black/80 text-white text-[10px] tracking-widest px-2.5 py-1 rounded border border-white/15">
+                                                {dish.code}
+                                            </span>
+                                            <span className="absolute bottom-3 right-3 bg-black/80 text-white text-base font-bold px-3 py-1 rounded-xl backdrop-blur-md border border-white/10">
+                                                {formatEuro(dish.price)}
+                                            </span>
+                                        </div>
+
+                                        <h3 className="text-lg sm:text-xl font-bold text-bone tracking-wide uppercase line-clamp-1">
+                                            {lang === 'de' ? dish.titleDe : dish.titleEn}
+                                        </h3>
+                                        <p className="text-xs sm:text-sm text-white/60 mt-1.5 line-clamp-2 font-light leading-relaxed">
+                                            {lang === 'de' ? dish.descDe : dish.descEn}
+                                        </p>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                                        <span className="text-[10px] tracking-[0.2em] uppercase text-mosch-orange font-semibold">
+                                            {lang === 'de' ? dish.badgeDe : dish.badgeEn}
+                                        </span>
+                                        <span className="text-xs bg-mosch-red/20 border border-mosch-red/40 text-white px-3.5 py-2 rounded-xl font-semibold tracking-wider uppercase">
+                                            {isActive ? 'Select & Customize →' : 'View Card'}
+                                        </span>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [lang, setLang] = useState('de');
+            const [activeCat, setActiveCat] = useState('specials');
+            const [modalDish, setModalDish] = useState(null);
+            const [chosenProteins, setChosenProteins] = useState([]);
+            const [selectionCount, setSelectionCount] = useState(0);
+            
+            const [showBookingModal, setShowBookingModal] = useState(false);
+            const [bookingDone, setBookingDone] = useState(false);
+            const [feedbackText, setFeedbackText] = useState('');
+            const [feedbackSent, setFeedbackSent] = useState(false);
+
+            const t = COPY[lang];
+            const currentDeckItems = MENU_DATA.filter(i => i.category === activeCat);
+
+            const toggleProtein = (id) => {
+                setChosenProteins(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+            };
+
+            const currentModalTotal = () => {
+                if (!modalDish) return 0;
+                const extra = chosenProteins.reduce((acc, id) => {
+                    const found = EXTRA_PROTEINS.find(p => p.id === id);
+                    return acc + (found ? found.price : 0);
+                }, 0);
+                return modalDish.price + extra;
+            };
+
+            return (
+                <div className="min-h-screen bg-app-bg text-bone relative overflow-x-hidden pb-28 lg:pb-16">
+                    
+                    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+                        <div className="absolute top-0 bottom-0 left-6 sm:left-12 w-[1px] bg-mosch-red/15" />
+                        <div className="absolute top-0 bottom-0 right-6 sm:right-12 w-[1px] bg-mosch-red/15" />
+                        <div className="absolute top-[42%] left-1 sm:left-3 font-jp text-mosch-red/25 text-2xl sm:text-4xl font-bold writing-vertical tracking-[0.35em] select-none">
+                            笑顔の材料
+                        </div>
+                        <div className="absolute top-[45%] right-1 sm:right-3 font-jp text-amber-500/20 text-2xl sm:text-4xl font-bold writing-vertical tracking-[0.35em] select-none">
+                            本格手打ち麺
+                        </div>
+                    </div>
+
+                    <header className="fixed top-0 left-0 right-0 z-40 bg-app-bg/85 backdrop-blur-xl border-b border-white/10 px-5 sm:px-12 py-4 flex items-center justify-between">
+                        <a href="#" className="flex items-baseline gap-2.5">
+                            <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-mosch-red">
+                                MoschMosch<sup className="text-[10px] text-mosch-red ml-0.5">™</sup>
+                            </span>
+                            <span className="font-jp text-xs sm:text-sm text-white/45 tracking-widest">
+                                モッシュモッシュ
+                            </span>
+                        </a>
+
+                        <div className="flex items-center gap-4 sm:gap-6">
+                            <div className="flex items-center border border-white/15 rounded-full p-0.5 bg-panel-bg/90">
+                                <button
+                                    onClick={() => setLang('de')}
+                                    className={`px-3 py-1 rounded-full text-[11px] font-medium tracking-widest transition-all ${
+                                        lang === 'de' ? 'bg-mosch-red text-white shadow-crimson-glow' : 'text-white/45 hover:text-white'
+                                    }`}
+                                >
+                                    DE
+                                </button>
+                                <button
+                                    onClick={() => setLang('en')}
+                                    className={`px-3 py-1 rounded-full text-[11px] font-medium tracking-widest transition-all ${
+                                        lang === 'en' ? 'bg-mosch-red text-white shadow-crimson-glow' : 'text-white/45 hover:text-white'
+                                    }`}
+                                >
+                                    EN
+                                </button>
+                            </div>
+
+                            <div className="hidden lg:flex items-center gap-3">
+                                <button 
+                                    onClick={() => setShowBookingModal(true)}
+                                    className="px-4 py-2 rounded-full border border-white/15 bg-white/[0.03] hover:bg-white/[0.08] text-xs tracking-wider text-bone flex items-center gap-2 transition-all cursor-pointer"
+                                >
+                                    {t.bookBtn}
+                                    {Icons.calendar}
+                                </button>
+                                <a 
+                                    href="#menu-section"
+                                    className="px-5 py-2 rounded-full bg-mosch-red hover:bg-red-700 text-white text-xs font-semibold tracking-wider shadow-crimson-glow flex items-center gap-2 transition-all"
+                                >
+                                    {t.orderBtn} {selectionCount > 0 ? `(${selectionCount})` : ''}
+                                    {Icons.pin}
+                                </a>
+                            </div>
+                        </div>
+                    </header>
+
+                    <section className="relative h-[68vh] sm:h-[78vh] w-full flex flex-col items-center justify-center text-center px-6 overflow-hidden border-b border-white/10">
+                        <motion.img 
+                            initial={{ scale: 1.08, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 0.55 }}
+                            transition={{ duration: 1.6, ease: "easeOut" }}
+                            src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1600&q=85"
+                            alt="MoschMosch Noodle Craft"
+                            className="absolute inset-0 w-full h-full object-cover object-center"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-app-bg/90 via-app-bg/35 to-app-bg" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,#050505_95%)]" />
+
+                        <motion.div 
+                            initial={{ opacity: 0, y: 24 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 1, delay: 0.2 }}
+                            className="relative z-10 max-w-3xl mx-auto mt-10"
+                        >
+                            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.02] text-bone">
+                                EINE PORTION <br/>
+                                <span className="text-mosch-red">LÄCHELN.</span>
+                            </h1>
+
+                            <p className="mt-5 text-xs sm:text-sm text-bone/85 font-medium tracking-wide">
+                                {t.subhead}
+                            </p>
+                            <p className="mt-1.5 text-xs sm:text-sm text-white/55 max-w-md mx-auto leading-relaxed font-light">
+                                {t.heroDesc}
+                            </p>
+                        </motion.div>
+
+                        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2">
+                            <span className="text-[9px] tracking-[0.3em] uppercase text-white/45">
+                                {t.scrollText}
+                            </span>
+                            <div className="w-[1px] h-5 bg-white/40" />
+                        </div>
+                    </section>
+
+                    <div id="menu-section" className="sticky top-[61px] z-30 bg-app-bg/90 backdrop-blur-xl border-b border-white/10 py-4 px-5 sm:px-12">
+                        <div className="max-w-6xl mx-auto flex items-center justify-start sm:justify-center gap-2.5 overflow-x-auto no-scrollbar">
+                            {t.categories.map(cat => {
+                                const isActive = activeCat === cat.id;
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setActiveCat(cat.id)}
+                                        className={`px-4 sm:px-5 py-2 rounded-full text-[11px] font-medium tracking-[0.15em] uppercase whitespace-nowrap flex items-center gap-2 transition-all ${
+                                            isActive
+                                            ? 'bg-mosch-red/25 border border-mosch-red text-white shadow-crimson-glow'
+                                            : 'bg-panel-bg/90 border border-white/15 text-white/65 hover:border-white/35 hover:text-white'
+                                        }`}
+                                    >
+                                        {cat.icon && (
+                                            <span className="text-mosch-red">
+                                                {Icons[cat.icon]}
+                                            </span>
+                                        )}
+                                        <span>{cat.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <main className="relative z-10 max-w-6xl mx-auto px-5 sm:px-12 pt-6 pb-16">
+                        
+                        <FanDeck 
+                            items={currentDeckItems} 
+                            lang={lang} 
+                            onSelectDish={(dish) => { setModalDish(dish); setChosenProteins([]); }} 
+                        />
+
+                        <section className="mt-16 bg-panel-bg/90 border border-white/10 rounded-2xl p-6 sm:p-10">
+                            <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-4 border-b border-white/10 pb-6">
+                                <div>
+                                    <span className="text-[10px] tracking-[0.3em] uppercase text-mosch-red block mb-2">
+                                        {t.proteinLabel}
+                                    </span>
+                                    <h3 className="text-2xl sm:text-3xl font-serif italic text-bone">
+                                        {t.proteinTitle}
+                                    </h3>
+                                </div>
+                                <p className="text-xs text-white/50 max-w-md leading-relaxed font-light">
+                                    {t.proteinSub}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                {EXTRA_PROTEINS.map(prot => (
+                                    <div 
+                                        key={prot.id}
+                                        className="border border-white/10 bg-card-bg/60 hover:border-white/25 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors"
+                                    >
+                                        <span className="text-xs text-bone/90 font-normal">
+                                            {lang === 'de' ? prot.nameDe : prot.nameEn}
+                                        </span>
+                                        <span className="text-xs text-mosch-red font-medium tracking-wider shrink-0 ml-2">
+                                            +{formatEuro(prot.price)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <section className="mt-12 bg-panel-bg/90 border border-white/10 rounded-2xl p-6 sm:p-10">
+                            <div className="max-w-xl mx-auto text-center space-y-3 mb-8">
+                                <div className="flex items-center justify-center gap-1 text-amber-400 mb-1">
+                                    {Array.from({length: 5}).map((_, i) => (
+                                        <span key={i}>{Icons.star}</span>
+                                    ))}
+                                </div>
+                                <h3 className="text-2xl sm:text-3xl font-serif italic text-bone">
+                                    {t.reviewTitle}
+                                </h3>
+                                <p className="text-xs sm:text-sm text-white/55 font-light">
+                                    {t.reviewSub}
+                                </p>
+                            </div>
+
+                            <div className="max-w-md mx-auto space-y-4">
+                                <a 
+                                    href="https://maps.google.com" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="w-full py-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/15 text-bone text-xs font-semibold tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-lg"
+                                >
+                                    <span>★</span> {t.googleBtn}
+                                </a>
+
+                                <div className="pt-2">
+                                    {feedbackSent ? (
+                                        <div className="p-4 rounded-xl bg-mosch-red/15 border border-mosch-red/40 text-center text-xs text-bone font-semibold tracking-wider">
+                                            {t.feedbackThank}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <textarea 
+                                                rows="3"
+                                                value={feedbackText}
+                                                onChange={(e) => setFeedbackText(e.target.value)}
+                                                placeholder={t.feedbackPlaceholder}
+                                                className="w-full bg-card-bg border border-white/15 rounded-xl p-3 text-xs text-bone focus:outline-none focus:border-mosch-red transition-all resize-none"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    if (feedbackText.trim()) setFeedbackSent(true);
+                                                }}
+                                                className="w-full py-3 rounded-xl bg-mosch-red hover:bg-red-700 text-white text-xs font-semibold tracking-widest uppercase transition-all shadow-crimson-glow"
+                                            >
+                                                {t.feedbackSend}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="pt-6 text-center">
+                                    <p className="text-[11px] text-white/40 tracking-wider uppercase font-light">
+                                        {t.inspirationLine}
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="mt-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-panel-bg/80 border border-white/10 rounded-2xl p-6 sm:p-10">
+                            <div className="lg:col-span-6 space-y-4">
+                                <span className="text-[10px] tracking-[0.3em] uppercase text-mosch-red block">
+                                    {t.spaceLabel}
+                                </span>
+                                <h3 className="text-2xl sm:text-4xl font-serif italic text-bone leading-tight">
+                                    {t.spaceTitle}
+                                </h3>
+                                <p className="text-xs sm:text-sm text-white/55 leading-relaxed font-light">
+                                    {t.spaceBody}
+                                </p>
+                                <div className="pt-4 border-t border-white/10 flex flex-wrap gap-6 text-xs text-white/70">
+                                    <div>
+                                        <span className="block text-[10px] tracking-[0.2em] text-white/35 uppercase">ADRESSE</span>
+                                        <span>Goetheplatz 2, 60311 Frankfurt am Main</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[10px] tracking-[0.2em] text-white/35 uppercase">TELEFON</span>
+                                        <span>+49 69 27291565</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="lg:col-span-6 grid grid-cols-2 gap-4">
+                                <div className="relative h-48 sm:h-60 rounded-xl overflow-hidden border border-white/10">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=700&q=80" 
+                                        alt="MoschMosch Lanterns" 
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/25" />
+                                </div>
+                                <div className="relative h-48 sm:h-60 rounded-xl overflow-hidden border border-white/10">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=700&q=80" 
+                                        alt="MoschMosch Timber Tables" 
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/25" />
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+
+                    <AnimatePresence>
+                        {showBookingModal && (
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setShowBookingModal(false)}
+                                className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+                            >
+                                <motion.div 
+                                    initial={{ y: 60, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: 60, opacity: 0 }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full max-w-md bg-panel-bg/95 backdrop-blur-xl border border-white/15 rounded-t-2xl sm:rounded-2xl p-6 shadow-3xl relative"
+                                >
+                                    <button 
+                                        onClick={() => setShowBookingModal(false)}
+                                        className="absolute top-4 right-4 w-8 h-8 rounded-full border border-white/10 text-white/50 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors"
+                                    >
+                                        {Icons.close}
+                                    </button>
+
+                                    <span className="text-[10px] tracking-[0.25em] uppercase text-mosch-red block mb-1">
+                                        GOETHEPLATZ 2, FRANKFURT
+                                    </span>
+                                    <h3 className="text-xl font-bold tracking-wide text-bone uppercase mb-4">
+                                        {t.bookBtn}
+                                    </h3>
+
+                                    {bookingDone ? (
+                                        <div className="py-8 text-center space-y-3">
+                                            <div className="w-12 h-12 rounded-full bg-mosch-red/20 border border-mosch-red text-mosch-red flex items-center justify-center mx-auto text-lg font-bold">✓</div>
+                                            <p className="text-sm font-semibold text-bone">Tisch erfolgreich angefragt!</p>
+                                            <p className="text-xs text-white/50">Wir freuen uns auf deinen Besuch am Goetheplatz.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3.5">
+                                            <div>
+                                                <label className="text-[10px] tracking-widest text-white/40 uppercase block mb-1">Name</label>
+                                                <input type="text" placeholder="Sidhant Gupta" className="w-full bg-card-bg border border-white/15 rounded-xl p-3 text-xs text-bone focus:outline-none focus:border-mosch-red" />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-[10px] tracking-widest text-white/40 uppercase block mb-1">Datum / Date</label>
+                                                    <input type="date" className="w-full bg-card-bg border border-white/15 rounded-xl p-3 text-xs text-bone focus:outline-none focus:border-mosch-red" />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] tracking-widest text-white/40 uppercase block mb-1">Gäste / Guests</label>
+                                                    <select className="w-full bg-card-bg border border-white/15 rounded-xl p-3 text-xs text-bone focus:outline-none focus:border-mosch-red">
+                                                        <option>2 Personen</option>
+                                                        <option>4 Personen</option>
+                                                        <option>6+ Personen</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => setBookingDone(true)}
+                                                className="w-full mt-2 py-3.5 rounded-full bg-mosch-red hover:bg-red-700 text-white text-xs font-semibold tracking-widest uppercase shadow-crimson-glow transition-all"
+                                            >
+                                                Verbindlich Reservieren
+                                            </button>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <AnimatePresence>
+                        {modalDish && (
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setModalDish(null)}
+                                className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+                            >
+                                <motion.div 
+                                    initial={{ y: 60, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: 60, opacity: 0 }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full max-w-md bg-panel-bg/95 backdrop-blur-xl border border-white/15 rounded-t-2xl sm:rounded-2xl p-6 shadow-3xl relative max-h-[85vh] overflow-y-auto"
+                                >
+                                    <button 
+                                        onClick={() => setModalDish(null)}
+                                        className="absolute top-4 right-4 w-8 h-8 rounded-full border border-white/10 text-white/50 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors"
+                                    >
+                                        {Icons.close}
+                                    </button>
+
+                                    <span className="text-[10px] tracking-[0.25em] uppercase text-mosch-red block mb-1">
+                                        {modalDish.code}
+                                    </span>
+                                    <h3 className="text-xl font-bold tracking-wide text-bone uppercase pr-8">
+                                        {lang === 'de' ? modalDish.titleDe : modalDish.titleEn}
+                                    </h3>
+                                    <p className="text-xs text-white/50 mt-2 mb-6 leading-relaxed font-light">
+                                        {lang === 'de' ? modalDish.descDe : modalDish.descEn}
+                                    </p>
+
+                                    <div className="border-t border-white/10 pt-4 mb-5">
+                                        <span className="text-[10px] tracking-[0.2em] uppercase text-white/45 block mb-3">
+                                            {t.customizePrompt}
+                                        </span>
+                                        <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                                            {EXTRA_PROTEINS.map(prot => {
+                                                const active = chosenProteins.includes(prot.id);
+                                                return (
+                                                    <button
+                                                        key={prot.id}
+                                                        type="button"
+                                                        onClick={() => toggleProtein(prot.id)}
+                                                        className={`w-full px-3.5 py-2.5 rounded-xl border text-left text-xs flex items-center justify-between transition-all ${
+                                                            active
+                                                            ? 'bg-mosch-red/20 border-mosch-red text-white'
+                                                            : 'bg-white/[0.03] border-white/10 text-white/70 hover:border-white/25'
+                                                        }`}
+                                                    >
+                                                        <span>{lang === 'de' ? prot.nameDe : prot.nameEn}</span>
+                                                        <span className="text-mosch-red font-medium">+{formatEuro(prot.price)}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            setSelectionCount(c => c + 1);
+                                            setModalDish(null);
+                                        }}
+                                        className="w-full py-3.5 rounded-full bg-mosch-red hover:bg-red-700 text-white text-xs font-semibold tracking-widest uppercase shadow-crimson-glow transition-all"
+                                    >
+                                        {t.confirmAdd} — {formatEuro(currentModalTotal())}
+                                    </button>
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-app-bg via-app-bg/95 to-transparent pt-6 pb-4 px-5 flex items-center justify-center gap-3">
+                        <button 
+                            onClick={() => setShowBookingModal(true)}
+                            className="flex-1 max-w-[185px] py-3 px-4 rounded-full bg-card-bg/90 backdrop-blur-xl border border-white/20 text-bone text-xs font-medium tracking-wide flex items-center justify-center gap-2 shadow-2xl active:scale-95 transition-all cursor-pointer"
+                        >
+                            <span>{t.bookBtn}</span>
+                            <span className="text-white/60">{Icons.calendar}</span>
+                        </button>
+                        <a 
+                            href="#menu-section"
+                            className="flex-1 max-w-[185px] py-3 px-4 rounded-full bg-mosch-red text-white text-xs font-semibold tracking-wide flex items-center justify-center gap-2 shadow-crimson-glow active:scale-95 transition-all"
+                        >
+                            <span>{t.orderBtn} {selectionCount > 0 ? `(${selectionCount})` : ''}</span>
+                            <span>{Icons.pin}</span>
+                        </a>
+                    </div>
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
